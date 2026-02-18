@@ -339,31 +339,29 @@ else:
             st.markdown("<h4 style='color:#ff4b4b'>6. Audience Engagement (Votes)</h4>", unsafe_allow_html=True)
             st.bar_chart(df.set_index("Title")["Votes"].head(7), color="#ff4b4b")
             
-    # ================= 8. AI NLP SEMANTIC SEARCH (NEW FEATURE) =================
+    # NLP SECTION (FIXED & IMPROVED)
     st.markdown("<div class='section-head'>8. AI NLP Semantic Search 🤖</div><div class='neon-divider'></div>", unsafe_allow_html=True)
+    st.info("💡 **AI Search Engine:** Describe a plot like 'Space scientist' or 'Ghost horror' to find matches from 200+ movies.")
     
-    st.info("💡 **How it works:** This uses TF-IDF (Term Frequency-Inverse Document Frequency) and Cosine Similarity to understand the *meaning* of your sentence and match it to movie plots.")
-    
-    nlp_query = st.text_area("Describe the exact movie plot you want:", "A policeman fighting a gangster for revenge in a big city", height=100)
+    nlp_query = st.text_area("What kind of movie plot are you looking for?", "A policeman fighting a gangster for revenge in a big city", height=100)
     
     if st.button("🔍 ANALYZE WITH NLP"):
-        with st.spinner("AI is reading movie scripts..."):
-            # 1. We need a pool of movies to search through. 
-            # In a real app, this is a database. Here, we fetch 60 popular Indian movies to create a mini-database.
-            pool_1 = fetch_api(f"https://api.themoviedb.org/3/discover/movie?api_key={TMDB_API_KEY}&region=IN&sort_by=popularity.desc&page=1&with_original_language=ta|te|hi")
-            pool_2 = fetch_api(f"https://api.themoviedb.org/3/discover/movie?api_key={TMDB_API_KEY}&region=IN&sort_by=popularity.desc&page=2&with_original_language=ta|te|hi")
-            pool_3 = fetch_api(f"https://api.themoviedb.org/3/discover/movie?api_key={TMDB_API_KEY}&region=IN&sort_by=vote_average.desc&page=1&vote_count.gte=100")
+        with st.spinner("AI is reading 200+ movie scripts..."):
+            # Fetch 10 pages (200 movies) to cover all genres like Sci-Fi and Horror
+            all_movies = []
+            for p in range(1, 11):
+                url = f"https://api.themoviedb.org/3/discover/movie?api_key={TMDB_API_KEY}&region=IN&sort_by=popularity.desc&page={p}&with_original_language=ta|te|hi|en"
+                all_movies.extend(fetch_api(url))
             
-            # Combine pools
-            movie_pool = pool_1 + pool_2 + pool_3
+            # Remove duplicates
+            unique_pool = list({m['id']: m for m in all_movies}.values())
             
-            # Run NLP Algorithm
-            results = nlp_search(nlp_query, movie_pool)
+            results = nlp_search(nlp_query, unique_pool)
             
             if results:
-                st.success("Analysis Complete! Here are the best semantic matches:")
+                st.success(f"Analysis Complete! Found {len(results)} matches.")
                 render_row(results, "nlp")
             else:
-                st.error("No matches found in the current pool.")
-                
+                st.error("No exact matches in the current trending list. Try different keywords like 'Time travel', 'Ghost', or 'Revenge'.")
+
 
